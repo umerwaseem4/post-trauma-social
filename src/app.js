@@ -22,7 +22,9 @@ app.use(express.static('public'));
 
 // custom api routes
 import userRoute from './routes/user.route.js';
+import storyRoutes from './routes/story.route.js';
 
 app.use('/api/v1/user', userRoute);
+app.use('/api/v1/story', storyRoutes);
 
 export { app };

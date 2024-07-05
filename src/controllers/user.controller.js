@@ -147,8 +147,10 @@ export const verifyOTP = asyncHandler(async (req, res) => {
         throw new ApiError(404, 'User not found!');
     }
 
-    if (user.otp !== otp || user.otpExpires < Date.now()) {
-        throw new ApiError(400, 'Invalid OTP!');
+    const otpExpired = Date.now() > user.otpExpires;
+
+    if (user.otp !== otp || otpExpired) {
+        throw new ApiError(400, 'Invalid or expired OTP!');
     }
 
     user.isVerified = true;
@@ -171,33 +173,29 @@ export const resendOTP = asyncHandler(async (req, res) => {
     const user = await User.findOne({ email });
 
     if (!user) {
-        throw new ApiError(400, 'User doesnot found!');
+        throw new ApiError(404, 'User not found!');
     }
 
-    const currentTime = Date.now();
-    const otpSentTime = user.otpExpires.getTime() - 10 * 60 * 1000;
+    const otp = generateOTP();
+    const otpExpires = new Date(Date.now() + 10 * 60 * 1000);
 
-    if (currentTime - otpSentTime < 10 * 60 * 1000) {
-        throw new ApiError(
-            400,
-            'OTP was sent less than 10 mins about, please wait before requesting a new OTP!'
-        );
+    // dont send new otp before the previous one expires
+    if (user.otpExpires > Date.now()) {
+        throw new ApiError(400, 'OTP is still valid!');
     }
 
-    const newOTP = generateOTP();
-    user.otp = newOTP;
-    user.otpExpires = Date.now() + 10 * 60 * 1000;
+    // dont send otp if the user is already verified
+    if (user.isVerified) {
+        throw new ApiError(400, 'User is already verified!');
+    }
+
+    user.otp = otp;
+    user.otpExpires = otpExpires;
     await user.save();
 
-    await sendOTP(email, newOTP);
+    await sendOTP(email, otp);
 
     return res
         .status(200)
-        .json(
-            new ApiResponse(
-                200,
-                null,
-                'New OTP has been sent! Please check Email!'
-            )
-        );
+        .json(new ApiResponse(200, null, 'OTP sent successfully!'));
 });
