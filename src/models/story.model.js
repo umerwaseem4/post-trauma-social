@@ -7,8 +7,9 @@ const storySchema = new Schema(
             required: true,
         },
         likes: {
-            type: Number,
-            default: 0,
+            type: [Schema.Types.ObjectId],
+            ref: 'User', // Reference the User model
+            default: [], // Ensure it defaults to an empty array
         },
         user: {
             type: Schema.Types.ObjectId,
