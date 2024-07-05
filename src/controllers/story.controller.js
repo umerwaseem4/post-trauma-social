@@ -4,7 +4,7 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { uploadOnCloudinary } from '../utils/cloudinary.js';
 
 export const getStories = asyncHandler(async (req, res) => {
-    const stories = await Story.find().populate('user', 'username');
+    const stories = await Story.find().populate('user', 'username avatar');
 
     return res.json(
         new ApiResponse(200, stories, 'Stories retrieved successfully!')

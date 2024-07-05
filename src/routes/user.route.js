@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { upload } from '../middlewares/upload.js';
 import {
     login,
+    logout,
     register,
     resendOTP,
     verifyOTP,
@@ -21,5 +22,6 @@ router.route('/register').post(
 router.route('/login').post(login);
 router.route('/verify-otp').post(verifyOTP);
 router.route('/resend-otp').post(resendOTP);
+router.route('/logout').post(logout);
 
 export default router;

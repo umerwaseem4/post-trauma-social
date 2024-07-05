@@ -199,3 +199,31 @@ export const resendOTP = asyncHandler(async (req, res) => {
         .status(200)
         .json(new ApiResponse(200, null, 'OTP sent successfully!'));
 });
+
+export const logout = asyncHandler(async (req, res) => {
+    const { refreshToken } = req.cookies;
+
+    if (!refreshToken) {
+        throw new ApiError(400, 'Refresh token is required!');
+    }
+
+    const user = await User.findOne({ refreshToken });
+
+    if (!user) {
+        throw new ApiError(404, 'User not found!');
+    }
+
+    user.refreshToken = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    const options = {
+        httpOnly: true,
+        secure: true,
+    };
+
+    return res
+        .status(200)
+        .clearCookie('refreshToken', options)
+        .clearCookie('accessToken', options)
+        .json(new ApiResponse(200, null, 'Logout successful!'));
+});

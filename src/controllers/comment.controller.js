@@ -1,6 +1,7 @@
-import { Comment } from '../models/comments.model';
-import { ApiError } from '../utils/ApiError';
-import { asyncHandler } from '../utils/asyncHandler';
+import { Comment } from '../models/comments.model.js';
+import { ApiError } from '../utils/ApiError.js';
+import { ApiResponse } from '../utils/ApiResponse.js';
+import { asyncHandler } from '../utils/asyncHandler.js';
 
 export const getCommentsOnStory = asyncHandler(async (req, res) => {
     const { storyId } = req.params;
@@ -30,13 +31,27 @@ export const createComment = asyncHandler(async (req, res) => {
             .json(new ApiError(400, null, 'Comment is required'));
     }
 
+    const userId = req.user._id;
+
     const newComment = new Comment({
         comment,
-        user: req.user._id,
+        user: userId,
         story: storyId,
     });
 
-    await newComment.save();
+    await newComment.save({ validateBeforeSave: false });
+
+    const responseComment = await newComment.populate('user', 'username');
+
+    return res
+        .status(201)
+        .json(
+            new ApiResponse(
+                201,
+                responseComment,
+                'Your comment has been added!'
+            )
+        );
 });
 
 export const likeComment = asyncHandler(async (req, res) => {
