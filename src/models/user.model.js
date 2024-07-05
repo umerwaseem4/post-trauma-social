@@ -1,5 +1,6 @@
 import mongoose, { Schema } from 'mongoose';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 
 const userSchema = new Schema(
     {
@@ -36,14 +37,24 @@ const userSchema = new Schema(
         refreshToken: {
             type: String,
         },
+        otp: {
+            type: String,
+        },
+        otpExpires: {
+            type: Date,
+        },
+        isVerified: {
+            type: Boolean,
+            default: false,
+        },
     },
     { timestamps: true }
 );
 
 userSchema.pre('save', async function (next) {
     if (!this.isModified('password')) return next();
-    await bcrypt.hash(this.password, 10);
-    return next();
+    this.password = await bcrypt.hash(this.password, 10);
+    next();
 });
 
 userSchema.methods.isPasswordCorrect = async function (password) {
