@@ -1,21 +1,24 @@
 import mongoose, { Schema } from 'mongoose';
 
 const commentSchema = new Schema({
-    description: {
+    comment: {
         type: String,
         required: true,
     },
     user: {
         type: Schema.Types.ObjectId,
         ref: 'User',
+        required: true,
     },
     story: {
         type: Schema.Types.ObjectId,
         ref: 'Story',
+        required: true,
     },
     likes: {
-        type: Number,
-        default: 0,
+        type: [Schema.Types.ObjectId],
+        ref: 'User',
+        default: [],
     },
 });
 

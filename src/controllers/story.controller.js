@@ -6,7 +6,17 @@ import { uploadOnCloudinary } from '../utils/cloudinary.js';
 export const getStories = asyncHandler(async (req, res) => {
     const stories = await Story.find().populate('user', 'username');
 
-    res.json(new ApiResponse(200, stories, 'Stories retrieved successfully!'));
+    return res.json(
+        new ApiResponse(200, stories, 'Stories retrieved successfully!')
+    );
+});
+
+export const getUserStories = asyncHandler(async (req, res) => {
+    const stories = await Story.find({ user: req.user._id });
+
+    return res.json(
+        new ApiResponse(200, stories, 'Stories retrieved successfully!')
+    );
 });
 
 export const createStory = asyncHandler(async (req, res) => {
