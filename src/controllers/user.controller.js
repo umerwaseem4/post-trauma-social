@@ -3,7 +3,6 @@ import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
 import { uploadOnCloudinary } from '../utils/cloudinary.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import jwt from 'jsonwebtoken';
 import { generateOTP, sendOTP } from '../utils/generateOTP.js';
 
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -135,7 +134,7 @@ export const login = asyncHandler(async (req, res) => {
         );
 });
 
-export const vertification = asyncHandler(async (req, res) => {
+export const verifyOTP = asyncHandler(async (req, res) => {
     const { email, otp } = req.body;
 
     if (!email || !otp) {
@@ -160,4 +159,45 @@ export const vertification = asyncHandler(async (req, res) => {
     return res
         .status(200)
         .json(new ApiResponse(200, null, 'Email verified successfully!'));
+});
+
+export const resendOTP = asyncHandler(async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        throw new ApiError(400, 'Email is required!');
+    }
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+        throw new ApiError(400, 'User doesnot found!');
+    }
+
+    const currentTime = Date.now();
+    const otpSentTime = user.otpExpires.getTime() - 10 * 60 * 1000;
+
+    if (currentTime - otpSentTime < 10 * 60 * 1000) {
+        throw new ApiError(
+            400,
+            'OTP was sent less than 10 mins about, please wait before requesting a new OTP!'
+        );
+    }
+
+    const newOTP = generateOTP();
+    user.otp = newOTP;
+    user.otpExpires = Date.now() + 10 * 60 * 1000;
+    await user.save();
+
+    await sendOTP(email, newOTP);
+
+    return res
+        .status(200)
+        .json(
+            new ApiResponse(
+                200,
+                null,
+                'New OTP has been sent! Please check Email!'
+            )
+        );
 });
