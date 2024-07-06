@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import morgan from 'morgan';
 
 const app = express();
 
@@ -19,6 +20,7 @@ app.use(
 );
 app.use(cookieParser());
 app.use(express.static('public'));
+app.use(morgan('tiny'));
 
 // custom api routes
 import userRoute from './routes/user.route.js';
