@@ -1,7 +1,10 @@
 import { User } from '../models/user.model.js';
 import { ApiError } from '../utils/ApiError.js';
 import { ApiResponse } from '../utils/ApiResponse.js';
-import { uploadOnCloudinary } from '../utils/cloudinary.js';
+import {
+    deleteFromCloudinary,
+    uploadOnCloudinary,
+} from '../utils/cloudinary.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { generateOTP, sendOTP } from '../utils/generateOTP.js';
 
@@ -23,7 +26,7 @@ const generateAccessAndRefreshTokens = async (userId) => {
 };
 
 export const register = asyncHandler(async (req, res) => {
-    const { username, email, password, fullname } = req.body;
+    const { username, email, password, fullname, bio } = req.body;
 
     // check if all the properties are provided
     if (!username || !email || !password || !fullname) {
@@ -61,6 +64,7 @@ export const register = asyncHandler(async (req, res) => {
         avatar: avatar?.url,
         otp,
         otpExpires,
+        bio: bio || '',
     });
 
     await newUser.save();
@@ -226,4 +230,70 @@ export const logout = asyncHandler(async (req, res) => {
         .clearCookie('refreshToken', options)
         .clearCookie('accessToken', options)
         .json(new ApiResponse(200, null, 'Logout successful!'));
+});
+
+export const updateAvatar = asyncHandler(async (req, res) => {
+    const { userId } = req.params;
+
+    if (!userId) {
+        throw new ApiError(400, 'User ID is required!');
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+        throw new ApiError(404, 'User not found!');
+    }
+
+    // Remove the previous avatar from Cloudinary
+    if (user.avatar) {
+        const publicId = user.avatar.split('/').pop().split('.')[0];
+        await deleteFromCloudinary(publicId);
+    }
+
+    const avatarLocalPath = req.files?.avatar[0]?.path;
+
+    if (!avatarLocalPath) {
+        throw new ApiError(400, 'Avatar file is required!');
+    }
+
+    const avatar = await uploadOnCloudinary(avatarLocalPath);
+
+    if (!avatar) {
+        throw new ApiError(400, 'failed to upload avatar to cloudinary!');
+    }
+
+    user.avatar = avatar;
+
+    await user.save({ validateBeforeSave: false });
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, null, 'Avatar updated successfully!'));
+});
+
+export const updateBio = asyncHandler(async (req, res) => {
+    const { userId } = req.params;
+    const { bio } = req.body;
+
+    if (!userId) {
+        throw new ApiError(400, 'User ID is required!');
+    }
+
+    if (!bio) {
+        throw new ApiError(400, 'Bio is required!');
+    }
+
+    const user = await User.findById(userId);
+
+    if (!user) {
+        throw new ApiError(404, 'User not found!');
+    }
+
+    user.bio = bio;
+    await user.save({ validateBeforeSave: false });
+
+    return res
+        .status(200)
+        .json(new ApiResponse(200, null, 'Bio updated successfully!'));
 });

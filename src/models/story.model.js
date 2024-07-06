@@ -20,6 +20,10 @@ const storySchema = new Schema(
             type: [String],
             default: [],
         },
+        isEdited: {
+            type: Boolean,
+            default: false,
+        },
     },
     { timestamps: true }
 );

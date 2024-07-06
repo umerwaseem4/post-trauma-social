@@ -90,3 +90,27 @@ export const likeComment = asyncHandler(async (req, res) => {
         )
     );
 });
+
+export const deleteComment = asyncHandler(async (req, res) => {
+    const { commentID } = req.params;
+
+    const comment = await Comment.findById(commentID);
+    if (!comment) {
+        return res
+            .status(404)
+            .json(new ApiError(404, null, 'comment not found'));
+    }
+
+    // check if the user is the owner of the comment
+    if (comment.user.toString() !== req.user._id.toString()) {
+        return res
+            .status(403)
+            .json(new ApiError(403, null, 'You are not authorized!'));
+    }
+
+    await comment.remove();
+
+    return res.json(
+        new ApiResponse(200, null, 'comment deleted successfully!')
+    );
+});

@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
     createStory,
+    deleteStory,
     getStories,
     getUserStories,
     likeStory,
@@ -16,5 +17,6 @@ router
     .route('/create-story')
     .post(verifyJWT, verifyUser, upload.array('images'), createStory);
 router.route('/like-story/:storyId').post(verifyJWT, verifyUser, likeStory);
+router.route('/delete-story').delete(verifyJWT, verifyUser, deleteStory);
 
 export default router;

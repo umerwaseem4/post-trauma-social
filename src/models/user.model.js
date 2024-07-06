@@ -23,6 +23,9 @@ const userSchema = new Schema(
             type: String,
             requried: true,
         },
+        bio: {
+            type: String,
+        },
         password: {
             type: String,
             required: [true, 'password is required!'],
